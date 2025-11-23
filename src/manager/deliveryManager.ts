@@ -34,15 +34,15 @@ function getDriverPropertis() {
 
 function registerDeliveryStomp() {
     stomp.publish({
-        destination: '/app/send/getDelivery',
+        destination: '/app/send/deliveries/byDate',
         body: JSON.stringify({ date: realtimeDate })
     })
 
-    stomp.subscribe('/topic/delivery/', (message) => {
+    stomp.subscribe('/topic/deliveries/', (message) => {
         deliveries = JSON.parse(message.body)
     })
 
-    stomp.subscribe('/topic/delivery/add', (message) => {
+    stomp.subscribe('/topic/deliveries/add', (message) => {
         saveDelivery(JSON.parse(message.body))
     })
 }

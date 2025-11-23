@@ -1,4 +1,5 @@
 import UUID from 'crypto'
+import { DateTime } from 'luxon'
 
 let tasks: { id: string , timeOut: NodeJS.Timeout }[] = []
 
@@ -7,8 +8,12 @@ const HOUR = MINUTE * 60
 const DAY_TO_MILISECONDS = HOUR * 24
 
 function registerTask(action: () => any, timeTo: string, id?: string) {
-    let actionStart = setTimeout(action, getTimeTo(timeTo))
+
+    let time = getTimeTo(timeTo)
+    let actionStart = setTimeout(action, time)
     tasks.push({id: id ? id : UUID.randomUUID(), timeOut:  actionStart})
+
+    //console.log(`Registrado ${id} para daqui a ${getHoursStringByTime(time)}`)
 
     return {
         cancell(){
@@ -34,8 +39,8 @@ function cancelTask(id: string) {
 }
 
 function getTimeTo(to: string) {
-    let time = new Date()
-    let currentyTime = getTimeHoursString(`${time.getHours()}:${time.getMinutes()}`)
+    let time = DateTime.now().setZone('America/Sao_Paulo');
+    let currentyTime = getTimeHoursString(`${time.hour}:${time.minute}`)
     let timeTo = getTimeHoursString(`${to}`)
     return Math.max(0, timeTo - currentyTime)
 }
@@ -45,9 +50,25 @@ function getTimeHoursString(time: string) {
     return HOUR * hours + MINUTE * minutes
 }
 
+function getHoursStringByTime(time){
+     // Converte ms para minutos
+  let totalMinutes = Math.floor(time / 60000);
+
+  // Separa horas e minutos
+  let hours = Math.floor(totalMinutes / 60);
+  let minutes = totalMinutes % 60;
+
+  // Formata com zero à esquerda
+  let hh = String(hours).padStart(2, "0");
+  let mm = String(minutes).padStart(2, "0");
+
+  return `${hh}:${mm}`;
+}
+
 export {
     getTimeTo,
     registerTask, 
     cancelTasks,
+    getHoursStringByTime,
     DAY_TO_MILISECONDS
 }

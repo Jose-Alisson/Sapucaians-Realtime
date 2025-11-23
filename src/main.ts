@@ -1,15 +1,7 @@
 
 import { io, run, stomp } from "./server.js";
 import jwt from 'jsonwebtoken'
-import winton from 'winston'
-
-const logger = winton.createLogger({
-  level: 'info',
-  format: winton.format.json(),
-  transports: [
-    new winton.transports.Console()
-  ]
-})
+import readline from 'readline'
 
 const KEY = process.env['SECURITY_KEY']
 
@@ -21,6 +13,7 @@ io.use((socket, next) => {
     const payload = token ? jwt.verify(token, KEY) : null;
     socket.data.user = { authorities: payload?.authorities ?? ['guest'], user: payload?.sub ?? 'guest'};
 
+    //console.log(payload)
     // console.log(payload, socket.data.user)
     //console.log(payload?.roles?.find((role: string) => role.includes("ROLE_")))
     next();
@@ -41,8 +34,4 @@ import { registerDeliveryStomp } from "./manager/deliveryManager.js";
 stomp.onConnect = (frame) => {
   registerOrderStomp()
   registerDeliveryStomp()
-}
-
-export {
-  logger
 }

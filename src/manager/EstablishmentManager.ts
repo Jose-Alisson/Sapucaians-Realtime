@@ -2,7 +2,6 @@ import { Socket } from "socket.io";
 import { io } from "../server.js";
 import { authSocketManager } from "./socketManager.js";
 import { cancelTasks, DAY_TO_MILISECONDS, getTimeTo, registerTask } from "./scheduleTaskManager.js";
-import { logger } from "../main.js";
 
 enum weekDays {
     sunday = 1,
@@ -11,7 +10,7 @@ enum weekDays {
     wednesday = 4,
     thursday = 5,
     friday = 6,
-    saturnday = 7
+    saturday = 7
 }
 
 let week = {
@@ -21,23 +20,23 @@ let week = {
     },
     monday: null,
     tuesday: {
-        start: '18:20',
+        start: '00:20',
         end: '23:40'
     },
     wednesday: {
-        start: '18:20',
+        start: '00:20',
         end: '23:40'
     },
     thursday: {
-        start: '18:20',
+        start: '00:20',
         end: '23:40'
     },
     friday: {
-        start: '18:20',
+        start: '00:20',
         end: '23:40'
     },
     saturday: {
-        start: '18:20',
+        start: '00:20',
         end: '23:40'
     },
 }
@@ -51,7 +50,9 @@ let open = false
 
 let today = week[getWeekDayByDayValue(new Date().getDay() + 1)]
 
-function getWeekDayByDayValue(dayValue: number){
+//console.log(getWeekDayByDayValue(new Date().getDay() + 1), today)
+
+function getWeekDayByDayValue(dayValue: number) {
     return Object.entries(weekDays).find(([key, value]) => value === dayValue)?.[0]
 }
 
@@ -106,5 +107,54 @@ socketAuth.onSecure({
     handler: (socket, time_) => {
         time = time_
         socketAuth.emitToRoles(['guest', 'admin'], 'time', time)
+    }
+})
+
+socketAuth.onSecure({
+    eventName: 'set_open_by_week_day',
+    rolesAllowed: ['admin'],
+    emitToRoles: ['admin'],
+    handler: (socket, weekDay, state) => {
+        if (state == false) {
+            week[weekDay] = null
+        } else {
+            week[weekDay] = {
+                start: '00:00',
+                end: '23:59'
+            }
+        }
+
+        scheduleOpenAndCloseEstablishment()
+        socketAuth.emitToRoles(['admin'], 'week', week)
+    }
+})
+
+
+socketAuth.onSecure({
+    eventName: 'set_time_start_to_weekday',
+    rolesAllowed: ['admin'],
+    emitToRoles: ['admin'],
+    handler: (socket, weekDay, time) => {
+        const day = week[weekDay]
+        if (day) {
+            day.start = time
+            scheduleOpenAndCloseEstablishment()
+            socketAuth.emitToRoles(['admin'], 'week', week)
+        }
+    }
+})
+
+socketAuth.onSecure({
+    eventName: 'set_time_end_to_weekday',
+    rolesAllowed: ['admin'],
+    emitToRoles: ['admin'],
+    handler: (socket, weekDay, time) => {
+        const day = week[weekDay]
+
+        if (day) {
+            day.end = time
+            scheduleOpenAndCloseEstablishment()
+            socketAuth.emitToRoles(['admin'], 'week', week)
+        }
     }
 })

@@ -1,0 +1,18 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "31.97.94.85",
+            "port": 3307,
+            "driver": "MySQL",
+            "name": "vps",
+            "database": "pedidos",
+            "username": "root"
+        }
+    ]
+}

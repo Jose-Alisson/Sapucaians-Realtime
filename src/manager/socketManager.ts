@@ -47,11 +47,12 @@ function authSocketManager(io: Server) {
 
         // console.log(registeredEvents)
 
+
         for (const evt of registeredEvents) {
 
             if (evt.rolesAllowed.some(au => authorities.includes(au))) {
 
-                console.log(evt.eventName, evt.rolesAllowed)
+                console.log(evt.eventName, evt.rolesAllowed, socket.data.user.user)
 
                 socket.on(evt.eventName, async (...data) => {
                     // Proteção extra
