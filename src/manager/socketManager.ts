@@ -1,4 +1,5 @@
 import { Server, Socket } from "socket.io";
+import { io } from "../server.js";
 
 function emitToRoles(io: Server, authorities = [], eventName, data) {
     if (!Array.isArray(authorities)) {
@@ -8,31 +9,33 @@ function emitToRoles(io: Server, authorities = [], eventName, data) {
     const sockets = Array.from(io.sockets.sockets.values());
 
     for (const socket of sockets) {
-        const authorities = socket.data.user?.authorities || ['guest'];
-        if (authorities.some(a => authorities.includes(a))) {
+        const authoritiesSocket = socket.data.user?.authorities || ['guest'];
+
+        if (authoritiesSocket.some(a => authorities.includes(a))) {
             socket.emit(eventName, data);
         }
     }
 }
 
-function authSocketManager(io: Server) {
+
+let listSecureManager = new Map<string, Function>()
+
+io.on('connection', (socket: Socket) => {
+    listSecureManager.get(socket.data.to)?.(socket)
+})
+
+function secureManager(base: string) {
     const registeredEvents = [];
-    const roleConnectHandlers = {}; // <-- NOVO
+    const roleConnectHandlers = {};
     const roleDisconnectHandlers = {}
 
-    io.on('connection', (socket: Socket) => {
+    listSecureManager.set(base, (socket: Socket) => {
+
         const authorities = socket.data.user?.authorities || ['guest'];
 
-        // // Executa todas as funções registradas para a role do socket
-        // const fns = roleConnectHandlers[authorities] || [];
-
         const entries = Object.entries(roleConnectHandlers)
-        // entries.filter(([key, value]) => authorities.some((authority) => key === authority)).forEach(([key, fn]) => fn(socket))
+        let handles = entries.filter(([key, value]) => authorities.some((authoritie) => key === authoritie)).map<any>(handle => { return handle[1] })
 
-        let handles = entries.filter(([key, value]) => authorities.some((authoritie) => key === authoritie))
-            .map<any>(handle => {
-                return handle[1]
-            })
         handles.forEach((handlers) => {
             if (Array.isArray(handlers)) {
                 handlers.forEach(fn => fn(socket))
@@ -41,22 +44,10 @@ function authSocketManager(io: Server) {
             }
         })
 
-        // fns.forEach(fn => fn(socket));
-
-        // Registra handlers para este socket
-
-        // console.log(registeredEvents)
-
-
         for (const evt of registeredEvents) {
 
             if (evt.rolesAllowed.some(au => authorities.includes(au))) {
-
-                console.log(evt.eventName, evt.rolesAllowed, socket.data.user.user)
-
                 socket.on(evt.eventName, async (...data) => {
-                    // Proteção extra
-                    // if (!evt.rolesAllowed.includes(socket.data.user?.role)) return;
                     const result = await evt.handler(socket, ...data);
 
                     // if (evt.autoEmitToRoles) {
@@ -70,15 +61,7 @@ function authSocketManager(io: Server) {
                     // }
                 });
             }
-
-            // Adiciona socket à "sala do evento" se ele tiver permissão para receber
-            if (evt.emitToRoles?.includes(authorities)) {
-                socket.join(evt.eventName);
-            }
         }
-
-
-
 
         socket.on('disconnect', () => {
             const entries = Object.entries(roleDisconnectHandlers)
@@ -89,14 +72,20 @@ function authSocketManager(io: Server) {
                 values.forEach(fn => fn(socket, socket.data.user.sub))
             })
         })
-
-    });
-
+    })
     return {
         /**
          * Registra evento com controle de roles
          */
-        onSecure: ({ eventName, handler, rolesAllowed = ['guest'], emitToRoles = [] }) => {
+        onSecure: ({ eventName, handler, rolesAllowed = ['guest'], emitToRoles = [], rewrite = false }) => {
+            if(rewrite){
+                let index = registeredEvents.findIndex(events => events.eventName === eventName)
+
+                if(index != -1){
+                    registeredEvents[index] = { eventName, handler, rolesAllowed, emitToRoles }
+                    return
+                }
+            }
             registeredEvents.push({ eventName, handler, rolesAllowed, emitToRoles });
         },
 
@@ -126,10 +115,26 @@ function authSocketManager(io: Server) {
                 }
                 roleConnectHandlers[authoritie].push(fn);
             }
+        },
+
+        hasHandlerDefined: (type: 'events' | 'connect' | 'disconnect', names: string[]) => {
+            switch (type) {
+                case 'events':
+                    return registeredEvents.some((e) => names.includes(e.eventName))
+
+                case 'connect':
+                    return Object.keys(roleConnectHandlers).some((key) => names.includes(key))
+
+                case 'disconnect':
+                    return Object.keys(roleDisconnectHandlers).some((key) => names.includes(key))
+
+                default:
+                    return false
+            }
         }
     };
 }
 
 export {
-    authSocketManager
+    secureManager
 }

@@ -1,15 +1,17 @@
+/*
+
 import { DefaultEventsMap, Server, Socket } from "socket.io";
 import { Order } from "../model/order.js";
 import { io, stomp } from "../server.js";
 import { formatarData, timeToDate } from "../utils.js";
-import { authSocketManager } from "./socketManager.js";
+import { secureManager } from "./socketManager.js";
 
 let realtimeDate = formatarData(new Date())
 let orders: Order[] = []
 let ordersWorks: { id: string, order: any }[] = []
 let newOrders: Order[] = []
 
-const socketAuth = authSocketManager(io);
+const socketAuth = secureManager(io);
 
 function saveOrder(order: Order) {
     let index = orders.findIndex(o => o.id === order.id)
@@ -70,7 +72,7 @@ socketAuth.onConnectByRole(['admin'], (socket: Socket) => {
     socket.emit("orders", orders)
     socket.emit("new_orders", newOrders)
 
-    console.log("Conectou", socket.id, socket.data)
+    console.log("Conectou", socket.id, socket.data, "oie")
 })
 
 socketAuth.onConnectByRole(['guest'], (socket: Socket) => {
@@ -138,3 +140,5 @@ export {
     registerOrderStomp,
     realtimeDate
 }
+
+*/

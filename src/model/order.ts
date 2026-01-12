@@ -7,4 +7,5 @@ export class Order{
     payment: string
     address: string
     profile: string
+    by?: string
 }

@@ -9,29 +9,30 @@ run()
 
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
+  const to = socket.handshake.auth.to; 
+
+  if (!to){
+    return next(new Error("To ausente, defina-o para qual estabelecimento você quer se connectar"))
+  }
+
   try {
     const payload = token ? jwt.verify(token, KEY) : null;
-    socket.data.user = { authorities: payload?.authorities ?? ['guest'], user: payload?.sub ?? 'guest'};
-
-    //console.log(payload)
-    // console.log(payload, socket.data.user)
-    //console.log(payload?.roles?.find((role: string) => role.includes("ROLE_")))
-    next();
+    socket.data.user = { authorities: payload?.authorities || ['guest_'+ to], user: payload?.sub ?? 'guest'};
   } catch(ex) {
     console.log(ex)
-    socket.data.user = { authorities: ['guest'] };
-    next();
+    socket.data.user = { authorities: ['guest_'+ to] };
   }
+
+  socket.data.to = to
+  socket.join(to)
+
+  next();
 });
 
-import './manager/orderManager.js';
-import './manager/establishmentManager.js'
-import './manager/printerManager.js'
+
 import './manager/deliveryManager.js'
-import { registerOrderStomp } from "./manager/orderManager.js";
-import { registerDeliveryStomp } from "./manager/deliveryManager.js";
+import { registerV2EstablishmentAndOrderManagerStomp } from "./manager/v2/establishmentAndOrderManager.js";
 
 stomp.onConnect = (frame) => {
-  registerOrderStomp()
-  registerDeliveryStomp()
+  registerV2EstablishmentAndOrderManagerStomp()
 }

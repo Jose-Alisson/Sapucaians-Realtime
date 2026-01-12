@@ -1,11 +1,11 @@
+/*
 import { io, stomp } from "../server.js"
-import { realtimeDate } from "./orderManager.js"
-import { authSocketManager } from "./socketManager.js"
+import { secureManager } from "./socketManager.js"
 
 let deliveries: any[] = []
 let drivers: { name: string, acc: number, totalDelivery: number }[] = []
 
-const socketAuth = authSocketManager(io)
+const socketAuth = secureManager(io)
 
 function saveDelivery(delivery: any) {
     let index = deliveries.findIndex(d => d.id === delivery.id)
@@ -33,11 +33,7 @@ function getDriverPropertis() {
 }
 
 function registerDeliveryStomp() {
-    stomp.publish({
-        destination: '/app/send/deliveries/byDate',
-        body: JSON.stringify({ date: realtimeDate })
-    })
-
+   
     stomp.subscribe('/topic/deliveries/', (message) => {
         deliveries = JSON.parse(message.body)
     })
@@ -64,3 +60,5 @@ socketAuth.onSecure({
 })
 
 export { registerDeliveryStomp }
+
+*/

@@ -1,6 +1,8 @@
+
+/*
 import { Socket } from "socket.io";
 import { io } from "../server.js";
-import { authSocketManager } from "./socketManager.js";
+import { secureManager } from "./socketManager.js";
 import { cancelTasks, DAY_TO_MILISECONDS, getTimeTo, registerTask } from "./scheduleTaskManager.js";
 
 enum weekDays {
@@ -82,7 +84,7 @@ function setOpenAndNotify(o: boolean) {
     socketAuth.emitToRoles(['guest', 'admin'], 'establishment_open', open)
 }
 
-const socketAuth = authSocketManager(io);
+const socketAuth = secureManager(io);
 
 socketAuth.onConnectByRole(['guest', 'admin'], (socket: Socket) => {
     socket.emit('establishment_open', open)
@@ -158,3 +160,4 @@ socketAuth.onSecure({
         }
     }
 })
+*/
